@@ -1,5 +1,9 @@
+from slugify import slugify
+
 from django.conf import settings
 from django.db import models
+
+from utils.image_uploaders import product_image_upload
 
 
 class Category(models.Model):
@@ -12,7 +16,7 @@ class Category(models.Model):
         verbose_name_plural = "Категории товаров"
 
     def __str__(self) -> str:
-        return f"{self.title}|{self.id}"
+        return f"{self.title} | {self.id}"
 
 
 class Brand(models.Model):
@@ -25,7 +29,7 @@ class Brand(models.Model):
         unique_together = ("title", "category")
         
     def __str__(self):
-        return f"{self.title}|Category - {self.category.title}"
+        return f"{self.title} |Category - {self.category.title}"
 
 
 class Product(models.Model):
@@ -35,7 +39,7 @@ class Product(models.Model):
     brand = models.ForeignKey(Brand, on_delete=models.CASCADE,\
                                verbose_name="Производитель товара", related_name="brand_products")
     title = models.CharField("Наименование продукта", max_length=128)
-    image = models.ImageField('Изображение', upload_to='products/', blank=True, null=True)
+    image = models.ImageField('Изображение', upload_to=product_image_upload, blank=True, null=True)
     slug = models.SlugField(unique=True)
     price = models.DecimalField("Стоимость", max_digits=10, decimal_places=2, default=0)
 
@@ -46,7 +50,21 @@ class Product(models.Model):
 
     def __str__(self):
         return f"{self.title} | {self.category.title}"
+
+
+class AdditionalProductImage(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name="Товар")
+    image = models.ImageField(upload_to=product_image_upload, blank=True, null=True)
+    slug = models.SlugField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Дополнительная иллюстрация твоара"
+        verbose_name_plural = "Дополнительные иллюстрации товара"
     
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.product.slug)
+        return super().save(*args, **kwargs)
+
 
 class Customer(models.Model):
 
@@ -92,7 +110,7 @@ class CartItem(models.Model):
         verbose_name_plural = "Товары в корзине"
     
     def __str__(self):
-        return f"{self.id}|{self.product.title}|корзина->№{self.cart.id}"
+        return f"{self.id} | {self.product.title}|корзина->№{self.cart.id}"
 
 
 class Order(models.Model):

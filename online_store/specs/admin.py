@@ -1,3 +1,10 @@
 from django.contrib import admin
 
-# Register your models here.
+from .models import *
+
+
+admin.site.register(Spec)
+admin.site.register(SpecUnit)
+admin.site.register(SpecCategoryName)
+admin.site.register(SpecUnitValidation)
+admin.site.register(SearchFilterType)
