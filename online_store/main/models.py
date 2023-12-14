@@ -47,6 +47,11 @@ class Product(models.Model):
         unique_together = ("category", "title", "slug")
         verbose_name = "Товар"
         verbose_name_plural = "Товары"
+    
+    def delete(self, *args, **kwargs):
+        for additional_image in self.product_set.all():
+            additional_image.delete()
+        super().delete(*args, **kwargs)
 
     def __str__(self):
         return f"{self.title} | {self.category.title}"

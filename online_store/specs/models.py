@@ -59,7 +59,7 @@ class Spec(models.Model):
 
     TYPE_CHOICES = (
         (INT, "Целое число"),
-        (STR, "Стррока"),
+        (STR, "Строка"),
         (FLOAT, "Число с плавающей точкой"),
         (BOOL, "Логический тип"),
     )
@@ -85,10 +85,10 @@ class Spec(models.Model):
 
     def __str__(self) -> str:
         return "|".join(
-            self.category.title,
+            [self.category.title,
             self.spec_category.name,
             self.spec_category.key,
-            self.value,
+            self.value]
         )
 
 
@@ -136,6 +136,6 @@ class SpecUnitValidation(models.Model):
         verbose_name_plural = "Единицы измерения при валидации"
     
     def __str__(self) -> str:
-        return f"Валидация {self.spec_unit}"
+        return f"Валидация {self.specunit}"
 
 
