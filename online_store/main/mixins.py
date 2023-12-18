@@ -34,7 +34,7 @@ class UserisAuthenticatedMixin:
 class CartMixin(ContextMixin):
     def get_cart(self):
         if self.request.user.is_authenticated:
-            customer = Customer.filter(user=self.request.user).first()
+            customer = Customer.objects.filter(user=self.request.user).first()
             cart = Cart.objects.filter(in_order=False, owner=customer)
             if not customer:
                 customer = Customer.objects.create(

@@ -1,8 +1,10 @@
+from django.urls import reverse
 from slugify import slugify
 
 from django.conf import settings
 from django.db import models
 
+from utils.help_funcs import convert_in_rubles_to_html
 from utils.image_uploaders import product_image_upload
 
 
@@ -14,6 +16,9 @@ class Category(models.Model):
     class Meta:
         verbose_name = "Категория товара"
         verbose_name_plural = "Категории товаров"
+    
+    def get_absolute_url(self):
+        return reverse('category', kwargs={'pk': self.pk})
 
     def __str__(self) -> str:
         return f"{self.title} | {self.id}"
@@ -52,6 +57,12 @@ class Product(models.Model):
         for additional_image in self.product_set.all():
             additional_image.delete()
         super().delete(*args, **kwargs)
+    
+    def get_absolute_url(self):
+        return reverse('product', kwargs={'pk': self.pk})
+    
+    def get_price(self):
+        return convert_in_rubles_to_html(self.price)
 
     def __str__(self):
         return f"{self.title} | {self.category.title}"
@@ -89,16 +100,39 @@ class Customer(models.Model):
 class Cart(models.Model):
 
     owner = models.ForeignKey(Customer, on_delete=models.CASCADE, verbose_name="Владалец")
-    items = models.ManyToManyField("CartItem", verbose_name="Товары", related_name="items_of_cart")
-    total_cost = models.DecimalField("Общая стоимость", max_digits=11, decimal_places=2)
+    items = models.ManyToManyField("CartItem", verbose_name="Товары", related_name="items_of_cart",\
+                                   blank=True)
+    total_cost = models.DecimalField("Общая стоимость", max_digits=11, decimal_places=2, blank=True, null=True)
     in_order = models.BooleanField(default=False, verbose_name="Использован?")
 
     class Meta:
         verbose_name = "Корзина"
         verbose_name_plural = "Корзины"
+    
+    def add(self, product, qty=1):
+        products_in_cart = [item.product for item in self.items.all()]
+        if product not in products_in_cart:
+            new_cart_item = CartItem.objects.create(
+                cart=self,
+                product=product,
+                qty=qty,
+                total_cost = product.price * qty,
+            )
+            self.items.add(new_cart_item)
+        
+    def remove(self, item):
+        if item in self.items.all():
+            self.items.remove(item)
+            item.delete()
+    
+    def change_item_qty(self, item, qty):
+        if item in self.items.all():
+            item.qty = qty
+            item.total_cost = item.product.price * qty
+            item.save()
 
     def __str__(self):
-        return f"Заказ покупателя - {self.owner.email}"
+        return f"Заказ покупателя - {self.owner.user.email}"
 
 
 class CartItem(models.Model):
@@ -115,7 +149,7 @@ class CartItem(models.Model):
         verbose_name_plural = "Товары в корзине"
     
     def __str__(self):
-        return f"{self.id} | {self.product.title}|корзина->№{self.cart.id}"
+        return f"{self.id} | {self.product.title}|корзина, всего: {self.cart.id}"
 
 
 class Order(models.Model):

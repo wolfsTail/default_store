@@ -12,13 +12,13 @@
             aria-expanded="false">Каталог</a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
             {% for category in categories %}
-            <li><a class="dropdown-item" href="">{{ category.title }}</a></li>
+            <li><a class="dropdown-item" href="{{ category.get_absolute_url }}">{{ category.title }}</a></li>
             {% endfor %}
           </ul>
         </li>
       </ul>
       {% if request.user.is_authenticated %}
-      <a class="d-flex text-decoration-none" style="padding-right: 10px;" href="">
+      <a class="d-flex text-decoration-none" style="padding-right: 10px;" href="{% url 'cart' %}">
         <button class="btn btn-outline-dark" type="submit">
           <i class="bi-cart-fill me-1"></i>
           Корзина

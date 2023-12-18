@@ -2,10 +2,12 @@ from django.contrib.auth import authenticate, login
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.views import View
+from django.views.generic.detail import DetailView
 from django.db import transaction
 
-from .models import Product, Customer
-from .mixins import CategoriesMixin
+from utils.help_funcs import recalc_cart
+from .models import CartItem, Category, Product, Customer
+from .mixins import CartMixin, CategoriesMixin
 from .forms import RegistrationForm, LoginForm
 
 
@@ -82,6 +84,66 @@ class LoginView(View):
         else:
             context['form'] = form
             return render(request, 'login.html', context)
+        
 
+class ProductDetailView(DetailView):
+    model = Product
+    context_object_name = 'product'
+    template_name = 'product_detail.html'
+    pk_url_kwarg = 'pk'
+
+
+class CategorytDetailView(DetailView):
+    model = Category
+    context_object_name = 'category'
+    template_name = 'category_detail.html'
+    pk_url_kwarg = 'pk'
+
+
+class CartView(View, CategoriesMixin, CartMixin):
+    def get(self, request, *args, **kwargs):
+        context = {}
+        context['cart'] = self.get_cart()
+        context['categories']: self.categories
+        return render(request, 'cart.html', context)
+    
+
+class AddToCartView(CartMixin, View):
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        product_id = request.POST.get('product_id')
+        qty = int(request.POST.get('qty', 1))
+        p = Product.objects.get(id=product_id)
+        cart = self.get_cart()
+        if p in [item.product for item in cart.items.all()]:
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        else:
+            cart.add(p, qty)
+            recalc_cart(cart)
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+
+class ChangeQtyInCartView(CartMixin, View):
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        item_id = request.POST.get('item_id')
+        qty = int(request.POST.get('qty', 1))
+        cart_item = CartItem.objects.get(id=item_id)
+        cart = self.get_cart()
+        if cart_item in [item for item in cart.items.all()]:
+            cart.change_item_qty(cart_item, qty)
+            recalc_cart(cart)
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+
+class RemoveFromCartView(CartMixin, View):
+    def get(self, request, *args, **kwargs):
+        item_id = kwargs.get('id')
+        cart = self.get_cart()
+        cart_item = CartItem.objects.get(id=item_id)
+        if cart_item in [item for item in cart.items.all()]:
+            cart.remove(cart_item)
+            recalc_cart(cart)
+        return HttpResponseRedirect('/cart/')
 
 
