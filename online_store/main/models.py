@@ -3,6 +3,7 @@ from slugify import slugify
 
 from django.conf import settings
 from django.db import models
+from django.db.models import Max
 
 from utils.help_funcs import convert_in_rubles_to_html
 from utils.image_uploaders import product_image_upload
@@ -116,20 +117,27 @@ class Cart(models.Model):
                 cart=self,
                 product=product,
                 qty=qty,
-                total_cost = product.price * qty,
+                total_cost=product.price * qty
             )
             self.items.add(new_cart_item)
-        
+
     def remove(self, item):
         if item in self.items.all():
             self.items.remove(item)
             item.delete()
-    
+
     def change_item_qty(self, item, qty):
         if item in self.items.all():
             item.qty = qty
             item.total_cost = item.product.price * qty
             item.save()
+
+    
+    def get_cart_items(self):
+        return ((item.product, item) for item in self.items.all().annotate(Max('created')).order_by('-created'))
+
+    def get_total_cost(self):
+        return convert_in_rubles_to_html(self.total_cost)
 
     def __str__(self):
         return f"Заказ покупателя - {self.owner.user.email}"
@@ -147,6 +155,9 @@ class CartItem(models.Model):
     class Meta:
         verbose_name = "Товар в корзине"
         verbose_name_plural = "Товары в корзине"
+    
+    def get_total_cost(self):
+        return convert_in_rubles_to_html(self.total_cost)
     
     def __str__(self):
         return f"{self.id} | {self.product.title}|корзина, всего: {self.cart.id}"

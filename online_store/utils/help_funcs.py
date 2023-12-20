@@ -11,5 +11,6 @@ def recalc_cart(cart):
     cart.save()
 
 def convert_in_rubles_to_html(obj):
-    value = f'{obj.normalize():,}'.replace(",", " ")
-    return mark_safe(" ".join([value, "<i class='fa-solid fa-ruble-sign'></i>"] ))
+    value = f'{obj.normalize():,}'.replace(',', ' ')
+    return mark_safe(" ".join([value, "<i class='fa-solid fa-ruble-sign'></i>"]))
+

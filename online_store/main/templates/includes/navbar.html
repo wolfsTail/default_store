@@ -6,7 +6,7 @@
         class="navbar-toggler-icon"></span></button>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
-        <li class="nav-item"><a class="nav-link active" aria-current="page" href="">Главная</a></li>
+        <li class="nav-item"><a class="nav-link active" aria-current="page" href="{% url 'index' %}">Главная</a></li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown"
             aria-expanded="false">Каталог</a>
@@ -22,7 +22,9 @@
         <button class="btn btn-outline-dark" type="submit">
           <i class="bi-cart-fill me-1"></i>
           Корзина
-          <span class="badge bg-danger text-light ms-1 rounded-pill"></span>
+          <span
+            class="badge {% if cart.items.count %} bg-danger text-light {% else %} bg-dark text-light {% endif %} ms-1 rounded-pill">
+            {{ cart.items.count }}</span>
         </button></a>
       <div class="flex-shrink-0 dropdown">
         <a href="#" class="d-block link-body-emphasis text-decoration-none dropdown-toggle" data-bs-toggle="dropdown"

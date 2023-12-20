@@ -11,13 +11,14 @@ from .mixins import CartMixin, CategoriesMixin
 from .forms import RegistrationForm, LoginForm
 
 
-class IndexView(CategoriesMixin, View):
+class IndexView(CategoriesMixin, CartMixin, View):
     
     def get(self, request, *args, **kwargs):
         context = {}
         products = Product.objects.all().order_by("?")[:4]
         context['products'] = products
         context['categories'] = self.categories
+        context['cart'] = self.get_cart()
         return render(request, 'index.html', context)
 
 
@@ -86,7 +87,7 @@ class LoginView(View):
             return render(request, 'login.html', context)
         
 
-class ProductDetailView(DetailView):
+class ProductDetailView(DetailView, CategoriesMixin, CartMixin):
     model = Product
     context_object_name = 'product'
     template_name = 'product_detail.html'
@@ -138,7 +139,7 @@ class ChangeQtyInCartView(CartMixin, View):
 
 class RemoveFromCartView(CartMixin, View):
     def get(self, request, *args, **kwargs):
-        item_id = kwargs.get('id')
+        item_id = kwargs.get('item_id')
         cart = self.get_cart()
         cart_item = CartItem.objects.get(id=item_id)
         if cart_item in [item for item in cart.items.all()]:

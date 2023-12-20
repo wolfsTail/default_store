@@ -57,8 +57,9 @@
                             <div class="text-center"><a class="btn btn-primary mt-auto"
                                     href="{{ product.get_absolute_url }}">Подробно</a></div><br>
                             <div class="text-center">
-                                <form action="" method="POST">
-                                    <input type="hidden" name="product_id" value="">
+                                <form action="{% url 'add_to_cart' %}" method="POST">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="product_id" value="{{ product.id }}">
                                     <input type="hidden" name="qty" value="1">
                                     <input type="submit" class="btn btn-outline-dark mt-auto"
                                         value="Добавить в корзину">

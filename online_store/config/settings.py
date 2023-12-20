@@ -154,4 +154,4 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
 
 CRISPY_TEMPLATE_PACK = 'bootstrap5'
 
-AUTHENTICATION_BACKENDS = ['main.backends.ExtendedUserModelBackend',]
+AUTHENTICATION_BACKENDS = ['main.backends.ExtendedUserModelBackend']
