@@ -4,11 +4,13 @@ from django.shortcuts import render
 from django.views import View
 from django.views.generic.detail import DetailView
 from django.db import transaction
+from django.contrib import messages
+from django.utils.safestring import mark_safe
 
 from utils.help_funcs import recalc_cart
-from .models import CartItem, Category, Product, Customer
-from .mixins import CartMixin, CategoriesMixin
-from .forms import RegistrationForm, LoginForm
+from .models import CartItem, Category, Order, Product, Customer
+from .mixins import CartMixin, CategoriesMixin, UserisAuthenticatedMixin
+from .forms import RegistrationForm, LoginForm, OrderForm
 
 
 class IndexView(CategoriesMixin, CartMixin, View):
@@ -94,7 +96,7 @@ class ProductDetailView(DetailView, CategoriesMixin, CartMixin):
     pk_url_kwarg = 'pk'
 
 
-class CategorytDetailView(DetailView):
+class CategorytDetailView(DetailView, CategoriesMixin, CartMixin):
     model = Category
     context_object_name = 'category'
     template_name = 'category_detail.html'
@@ -146,5 +148,45 @@ class RemoveFromCartView(CartMixin, View):
             cart.remove(cart_item)
             recalc_cart(cart)
         return HttpResponseRedirect('/cart/')
+    
 
+class MakeOrderView(CartMixin, CategoriesMixin, UserisAuthenticatedMixin, View):
+    def get(self, request, *args, **kwargs):
+        context = {}
+        customer = Customer.objects.get(user=request.user)
+        form = OrderForm(initial={
+            'first_name': request.user.first_name,
+            'last_name': request.user.last_name,
+            'phone': customer.phone,
+            'address': customer.address,
+        })
+        cart = self.get_cart()
+        if cart and not cart.items.count():
+            if request.META.get('HTTP_REFERER'):
+                return HttpResponseRedirect(request.META['HTTP_REFERER'])
+            return HttpResponseRedirect('/')
+        context['form'] = form
+        context['cart'] = cart
+        context['categories'] = self.categories
+        return render(request, 'order.html', context)
+    
+    @transaction.atomic
+    def post(self, request, *arhs, **kwargs):
+        form = OrderForm(request.POST or None)
+        customer = Customer.objects.get(user=request.user)
+        cart = self.get_cart()
+        if form.is_valid():
+            Order.objects.create(
+                customer=customer,
+                order_cost=cart.total_cost,
+                cart=cart,
+                **form.cleaned_data
+            )
+            cart.in_order = True
+            cart.save()
+            messages.info(request, mark_safe(f'Благодарим за Ваш заказ! \
+                                             Можете отслеживать статус заказа в <a href="/profile/">личном кабинете.</a>'))
+            return HttpResponseRedirect('/')
+        else:
+            return HttpResponseRedirect('/make_order/')
 

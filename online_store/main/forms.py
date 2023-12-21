@@ -1,6 +1,8 @@
 from django import forms
 from django.contrib.auth import get_user_model
 
+from online_store.main.models import Order
+
 
 USER = get_user_model()
 
@@ -79,4 +81,25 @@ class LoginForm(forms.ModelForm):
             'email',
             'password',
         )
+
+
+class OrderForm(forms.ModelForm):
+    order_date = forms.DateField(widget=forms.TextInput(attrs={'type': 'date'}))
+    first_name = forms.CharField(required=True)
+    last_name = forms.CharField(required=True)
+    phone = forms.CharField(required=True)
+    address = forms.CharField(required=True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['order_date'].label = 'Дата получения заказа'
+        self.fields['first_name'].label = 'Имя'
+        self.fields['last_name'].label = 'Фамилия'
+        self.fields['phone'].label = 'Номер телефона'
+        self.fields['address'].label = 'Адрес'    
+
+    class Meta:
+        model = Order
+        fields = 'first_name', 'last_name', 'phone', 'buying_type', 'order_date', 'comment',
+
 
