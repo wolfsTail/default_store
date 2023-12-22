@@ -20,6 +20,9 @@ class Category(models.Model):
     
     def get_absolute_url(self):
         return reverse('category', kwargs={'pk': self.pk})
+    
+    def get_brands_sorted(self):
+        return self.brand_set.all().order_by('title')
 
     def __str__(self) -> str:
         return f"{self.title} | {self.id}"
@@ -211,6 +214,9 @@ class Order(models.Model):
     class Meta:
         verbose_name = "Заказ"
         verbose_name_plural = "Заказы"
+
+    def get_order_cost(self):
+        return convert_in_rubles_to_html(self.order_cost)
 
     def __str__(self):
         return f"Заказ №{self.id}|Покупатель-{self.customer.user.email}"

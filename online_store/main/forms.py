@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 
-from online_store.main.models import Order
+from main.models import Order
 
 
 USER = get_user_model()
@@ -100,6 +100,6 @@ class OrderForm(forms.ModelForm):
 
     class Meta:
         model = Order
-        fields = 'first_name', 'last_name', 'phone', 'buying_type', 'order_date', 'comment',
+        fields = 'first_name', 'last_name', 'phone', 'buying_type', 'order_date', 'address', 'comment',
 
 

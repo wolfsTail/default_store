@@ -1,18 +1,24 @@
-
+{% extends 'index.html' %}
+{% load static %}
+{% block content %}
 <div class="container">
     <h4 class="text-center pt-4 pb-4"></h4>
     <div class="row">
-            <div class="col-md-4">
+        <div class="col-md-4">
             <div class="card p-4">
-                <form action="" method="GET" id="">
-                <h4 class="pb-3"></h4>
+                <form action="{% url 'category' pk=category.id %}" method="GET" id="filterForm">
+                    <h4 class="pb-3">Brand's</h4>
+                    {% for brand in category.get_brands_sorted %}
                     <div class="form-check">
-                      <input class="form-check-input" type="checkbox" name="brand" value="" id="" onchange="">
-                      <label class="form-check-label" for="">
-                      </label>
+                        <input class="form-check-input" type="checkbox" name="brand" id="{{ brand.id }}-brand"
+                            value="{{ brand.title }}"
+                            onchange="setCheckedValueFromLocalStorage('{{ brand.id }}-brand')">
+                        <label class="form-check-label" for="{{ brand.id }}-brand">
+                            {{ brand.title }}
+                        </label>
                     </div>
-
-                <hr>
+                    {% endfor %}
+                    <hr>
 
                     <h4 class="pb-3"></h4>
 
@@ -20,56 +26,94 @@
 
                     <hr>
 
-                <div class="row mb-3">
-                <div class="col-md-6">
-                      <label for="" class="form-label"></label>
-                      <input type="number" class="form-control" name="" id="" placeholder="" onchange="">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="" class="form-label"></label>
+                            <input type="number" class="form-control" name="" id="" placeholder="" onchange="">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="" class="form-label"></label>
+                            <input type="number" class="form-control" name="" id="" placeholder="" onchange="">
+                        </div>
+                        <div id="" class="pt-2" style="height: 13px;"></div>
                     </div>
-                <div class="col-md-6 mb-3">
-                      <label for="" class="form-label"></label>
-                      <input type="number" class="form-control" name="" id="" placeholder="" onchange="">
-                </div>
-                <div id="" class="pt-2" style="height: 13px;"></div>
-                </div>
-                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter"></i></button>
-                <button type="submit" class="btn btn-danger" id="reset-filter"><i class="fa-solid fa-power-off"></i></button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter"></i></button>
+                    <button type="submit" class="btn btn-danger" id="reset-filter"><i
+                            class="fa-solid fa-power-off"></i></button>
                 </form>
             </div>
 
         </div>
         <div class="col-md-">
-                <div class="row">
+            <div class="row">
 
-                        <div class="col-md-3 mb-5">
-                        <img class="card-img-top" src="" alt="..." />
-                        </div>
-                        <div class="col-md-7 mb-5" style="padding-left: 55px;">
-                            <p class="fw-bolder"></p>
-                            
-                                <p style="font-size: 12px;"><span style="color:grey"></span> <span style="font-size: 14px;"></span></p>
+                <div class="col-md-3 mb-5">
+                    <img class="card-img-top" src="" alt="..." />
+                </div>
+                <div class="col-md-7 mb-5" style="padding-left: 55px;">
+                    <p class="fw-bolder"></p>
 
-                        </div>
-                        <div class="col-md-2 mb-5">
-                            <p class="fw-bolder text-center"></p>
-                            <div class="card-footer p-4 pt-0 border-top-0 bg-transparent justify-content-center">
-                                <a class="btn btn-primary mt-auto" href="">Подробно</a></div>
-  
-                                    <div class="text-center">
-                                        <form action="" method="POST">
+                    <p style="font-size: 12px;"><span style="color:grey"></span> <span style="font-size: 14px;"></span>
+                    </p>
 
-                                            <input type="hidden" name="" value="">
-                                            <div class="form-check form-check-inline">
-                                            <input type="submit" class="btn btn-outline-dark" value="Добавить в корзину">
-                                            </div>
-                                        </form>
-                                    </div>
+                </div>
+                <div class="col-md-2 mb-5">
+                    <p class="fw-bolder text-center"></p>
+                    <div class="card-footer p-4 pt-0 border-top-0 bg-transparent justify-content-center">
+                        <a class="btn btn-primary mt-auto" href="">Подробно</a>
+                    </div>
 
+                    <div class="text-center">
+                        <form action="" method="POST">
 
-                        </div>
+                            <input type="hidden" name="" value="">
+                            <div class="form-check form-check-inline">
+                                <input type="submit" class="btn btn-outline-dark" value="Добавить в корзину">
+                            </div>
+                        </form>
+                    </div>
+
 
                 </div>
 
-                </div>
+            </div>
+
         </div>
     </div>
 </div>
+</div>
+{% endblock content %}
+{% block js %}
+    <script>
+        function setCheckedValueFromLocalStorage(value){
+            let el = document.getElementById(value)
+            if(document.getElementById(value).checked){
+                if(el.type == 'radio'){
+                    $.each(localStorage, function (key, val){
+                        let existing_duplicate_radio_btn = key.split('-')
+                        if(existing_duplicate_radio_btn.length == 2){
+                            let current_radio_value = value.split("-")
+                            if(existing_duplicate_radio_btn[1] == current_radio_value[1]){
+                                localStorage.removeItem(existing_duplicate_radio_btn.join("-"))
+                            }
+                        }
+                    })
+                }
+                localStorage.setItem(value, "1");
+            }else{
+                if(el.type == 'radio'){
+                    $.each(localStorage, function (key, val){
+                        let existing_duplicate_radio_btn = key.split('-')
+                        if(existing_duplicate_radio_btn.length == 2){
+                            let current_radio_value = value.split("-")
+                            if(existing_duplicate_radio_btn[1] == current_radio_value[1]){
+                                localStorage.removeItem(existing_duplicate_radio_btn.join("-"))
+                            }
+                        }
+                    })
+                }
+            }
+            localStorage.setItem(value, "0")
+        }
+    </script>
+{% endblock js %}

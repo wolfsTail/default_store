@@ -1,6 +1,6 @@
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
   <div class="container px-4 px-lg-5">
-    <a class="navbar-brand" href="">Шаблон интернет-магазина</a>
+    <a class="navbar-brand" href="{% url 'index' %}">Шаблон интернет-магазина</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
       aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span
         class="navbar-toggler-icon"></span></button>
@@ -32,7 +32,7 @@
           <i class="bi bi-person-circle"></i>
         </a>
         <ul class="dropdown-menu text-small shadow">
-          <li><a class="dropdown-item" href="">Личный кабинет</a></li>
+          <li><a class="dropdown-item" href="{% url 'profile' %}">Личный кабинет</a></li>
           <li><a class="dropdown-item" href="">Выход</a></li>
         </ul>
       </div>

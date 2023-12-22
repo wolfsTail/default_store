@@ -150,7 +150,7 @@ class RemoveFromCartView(CartMixin, View):
         return HttpResponseRedirect('/cart/')
     
 
-class MakeOrderView(CartMixin, CategoriesMixin, UserisAuthenticatedMixin, View):
+class MakeOrderView(CartMixin, CategoriesMixin, View):
     def get(self, request, *args, **kwargs):
         context = {}
         customer = Customer.objects.get(user=request.user)
@@ -189,4 +189,14 @@ class MakeOrderView(CartMixin, CategoriesMixin, UserisAuthenticatedMixin, View):
             return HttpResponseRedirect('/')
         else:
             return HttpResponseRedirect('/make_order/')
+        
 
+class ProfileView(View):
+    @staticmethod
+    def get(request, *args, **kwargs):
+        context = {}
+        customer = Customer.objects.get(user=request.user)
+        orders = Order.objects.filter(customer=customer)
+        context['customer'] = customer
+        context['orders'] = orders
+        return render(request, 'profile.html', context)

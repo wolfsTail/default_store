@@ -5,7 +5,7 @@ from django.urls import path
 
 from .views import IndexView, RegistrationView, LoginView, ProductDetailView,\
                     CategorytDetailView, CartView, AddToCartView, RemoveFromCartView,\
-                    ChangeQtyInCartView, MakeOrderView
+                    ChangeQtyInCartView, MakeOrderView, ProfileView
 
 
 urlpatterns = [
@@ -15,6 +15,7 @@ urlpatterns = [
     # registration, autorization
     path('registration/', RegistrationView.as_view(), name='registration'),
     path('login/', LoginView.as_view(), name='login'),
+    path('profile/', ProfileView.as_view(), name='profile'),
     # cart's logic
     path('cart/', CartView.as_view(), name='cart'),
     path('add-to-cart/', AddToCartView.as_view(), name='add_to_cart'),

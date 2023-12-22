@@ -16,15 +16,15 @@ class CategoriesMixin(ContextMixin):
         context['categories'] = Category.objects.all()
         return context
 
-
+   
 class UserisAuthenticatedMixin:
 
     @staticmethod
     def _is_authenticated(request):
-        if request.user.is_authenticated:
+        if not request.user.is_authenticated:
             return False
         return True
-    
+
     def dispatch(self, request, *args, **kwargs):
         request_full_path = request.get_full_path()
         if 'login' in request_full_path or 'registration' in request_full_path:
@@ -40,6 +40,7 @@ class UserisAuthenticatedMixin:
                 return super().dispatch(request, *args, **kwargs)
             else:
                 return HttpResponseRedirect('/login/')
+
 
 
 
