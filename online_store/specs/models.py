@@ -82,6 +82,17 @@ class Spec(models.Model):
         unique_together = ('category', 'spec_category', 'product', 'value')
         verbose_name = "Характеристика товара"
         verbose_name_plural = "Характеристики товаров"
+    
+    def get_spec_unit(self):
+        spec_unit = self.spec_unit
+        if spec_unit:
+            type_choices_reversed = {v: k for k, v in self.TYPE_CHOICES}
+            if type_choices_reversed.get(spec_unit.unit) == self.BOOL:
+                return self.value
+            else:
+                return f'{self.value} {self.spec_unit.unit}'
+        else:
+            return self.value
 
     def __str__(self) -> str:
         return "|".join(

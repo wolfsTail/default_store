@@ -1,3 +1,7 @@
+from collections import defaultdict
+from typing import Any
+from natsort import natsorted
+
 from django.contrib.auth import authenticate, login
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
@@ -6,11 +10,13 @@ from django.views.generic.detail import DetailView
 from django.db import transaction
 from django.contrib import messages
 from django.utils.safestring import mark_safe
+from django.db.models import Min, Max
 
 from utils.help_funcs import recalc_cart
 from .models import CartItem, Category, Order, Product, Customer
 from .mixins import CartMixin, CategoriesMixin, UserisAuthenticatedMixin
 from .forms import RegistrationForm, LoginForm, OrderForm
+from specs.models import Spec
 
 
 class IndexView(CategoriesMixin, CartMixin, View):
@@ -101,6 +107,56 @@ class CategorytDetailView(DetailView, CategoriesMixin, CartMixin):
     context_object_name = 'category'
     template_name = 'category_detail.html'
     pk_url_kwarg = 'pk'
+
+    @staticmethod
+    def get_specs_data(category):
+        data = defaultdict(list)
+        specs = Spec.objects.filter(category=category).distinct("value", "spec_category__key")
+        for s in specs:
+            data[
+                (s.spec_category.name,
+                  s.get_spec_unit(),
+                  s.spec_category.key,
+                  s.spec_category.search_filter_type.html_code)
+                  ].append(s.value)
+
+        result = defaultdict(list)
+        result_for_sort = defaultdict(list)
+        counter = 1
+        for (spec_category, unit, key, html_code), values in data.items():
+            for val in values:
+                res = html_code.format(
+                    id_="-".join([str(counter), key]),
+                    key=key,
+                    html_value=unit,
+                    value=val
+                )
+                counter += 1
+                result[spec_category].append({'res': res, 'val': val})
+                result_for_sort[spec_category].append(val)
+
+        for sc, v in result_for_sort.items():
+            result_for_sort[sc] = natsorted(v)
+
+        for spec, data in result.items():
+            prepared_data = result_for_sort[spec]
+            new_data = []
+            for pos in prepared_data:
+                for d in data:
+                    if d['val'] == pos:
+                        new_data.append(d['res'])
+            result[spec] = new_data
+        return result
+    
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        category_obj = super().get_object()
+        context['filter_data'] = {k: v for k, v in self.get_specs_data(category_obj).items()}
+        context['price_range'] = Product.objects.filter(category=category_obj).aggregate(
+            minimum=Min('price'), 
+            maximum=Max('price'),
+        )
+        return context
 
 
 class CartView(View, CategoriesMixin, CartMixin):
