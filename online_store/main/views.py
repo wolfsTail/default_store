@@ -1,6 +1,7 @@
 from collections import defaultdict
 from typing import Any
 from natsort import natsorted
+from decimal import Decimal
 
 from django.contrib.auth import authenticate, login
 from django.http import HttpResponseRedirect
@@ -10,13 +11,14 @@ from django.views.generic.detail import DetailView
 from django.db import transaction
 from django.contrib import messages
 from django.utils.safestring import mark_safe
-from django.db.models import Min, Max
+from django.db.models import Min, Max, Q
+from django.core.paginator import Paginator
 
 from utils.help_funcs import recalc_cart
 from .models import CartItem, Category, Order, Product, Customer
 from .mixins import CartMixin, CategoriesMixin, UserisAuthenticatedMixin
 from .forms import RegistrationForm, LoginForm, OrderForm
-from specs.models import Spec
+from specs.models import Spec, SpecCategoryName
 
 
 class IndexView(CategoriesMixin, CartMixin, View):
@@ -148,14 +150,79 @@ class CategorytDetailView(DetailView, CategoriesMixin, CartMixin):
             result[spec] = new_data
         return result
     
+    def set_pagonated_qs(self, qs):
+        """set the required qty of displayed objects
+
+        Args:
+            qs: quуryset
+
+        Returns:
+            paginator objects
+        """
+        paginator = Paginator(qs, 1)
+        page_number = self.request.GET.get('page', 4)  # displayed
+        page_obj = paginator.get_page(page_number)
+        return page_obj
+
+    
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         category_obj = super().get_object()
+        products = Product.objects.filter(category=category_obj)
         context['filter_data'] = {k: v for k, v in self.get_specs_data(category_obj).items()}
         context['price_range'] = Product.objects.filter(category=category_obj).aggregate(
             minimum=Min('price'), 
             maximum=Max('price'),
         )
+        spec_list_from_query_string = list(self.request.GET.values())
+        if not spec_list_from_query_string:
+            context['page_obj'] = self.set_pagonated_qs(products)
+            return context
+        
+        q =Q()
+        q.default = Q.AND
+        data_for_q = {}
+
+        min_price = self.request.GET.get('min-price')
+        max_price = self.request.GET.get('max-price')
+        prices_q = Q()
+        if min_price:
+            prices_q &= Q(price__gte=Decimal('min-price'))
+        if max_price:
+            prices_q &= Q(price__lte=Decimal('max-price'))
+        
+        spec_categories = SpecCategoryName.objects.filter(
+            category=category_obj, key__in=list(self.request.GET.keys())
+        )
+
+        for item in spec_categories:
+            if self.request.GET.get(item.key):
+                data_for_q[item] = self.request.GET.getlist(item.key)
+        
+        for sc, values in data_for_q.items():
+            q |= Q(spec_category=sc, value__in=values)
+        
+        specs = None
+
+        if q:
+            specs = Spec.objects.filter(q, category=category_obj)
+        if specs:
+            if self.request.GET.get('brand'):
+                products = products.filter(prices_q, product_specs__in=specs, brand__title__in=self.request.GET.getlist('brand')).distinct()
+            else:
+                products = products.filter(prices_q, product_specs__in=specs).distinct()
+        else:
+            if self.request.GET.get('brand'):                            
+                products = products.filter(prices_q, brand__title__in=self.request.GET.getlist('brand')).distinct()
+            else:
+                products = products.filter(prices_q).distinct()
+
+        context['page_obj'] = self.set_pagonated_qs(products)
+        request_get = self.request.GET.copy()
+        if len(request_get):
+            if 'page' in list(request_get.keys()):
+                request_get.pop("page")
+        self.request.GET = request_get
         return context
 
 
