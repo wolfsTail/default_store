@@ -2,6 +2,7 @@ from django.conf.urls.static import static
 from django.conf import settings
 from django.contrib import admin
 from django.urls import path
+from django.contrib.auth.views import LogoutView
 
 from .views import IndexView, RegistrationView, LoginView, ProductDetailView,\
                     CategorytDetailView, CartView, AddToCartView, RemoveFromCartView,\
@@ -15,6 +16,7 @@ urlpatterns = [
     # registration, autorization
     path('registration/', RegistrationView.as_view(), name='registration'),
     path('login/', LoginView.as_view(), name='login'),
+    path('logout/', LogoutView.as_view(next_page='/'), name='logout'),
     path('profile/', ProfileView.as_view(), name='profile'),
     # cart's logic
     path('cart/', CartView.as_view(), name='cart'),

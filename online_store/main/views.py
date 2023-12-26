@@ -113,7 +113,10 @@ class CategorytDetailView(DetailView, CategoriesMixin, CartMixin):
     @staticmethod
     def get_specs_data(category):
         data = defaultdict(list)
-        specs = Spec.objects.filter(category=category).distinct("value", "spec_category__key")
+        specs = Spec.objects.filter(category=category).select_related(
+            'spec_category', 'spec_category__search_filter_type', 'spec_unit', 'product'
+        ).distinct("value", "spec_category__key")
+
         for s in specs:
             data[
                 (s.spec_category.name,
@@ -152,15 +155,13 @@ class CategorytDetailView(DetailView, CategoriesMixin, CartMixin):
     
     def set_pagonated_qs(self, qs):
         """set the required qty of displayed objects
-
         Args:
             qs: quуryset
-
         Returns:
             paginator objects
         """
-        paginator = Paginator(qs, 1)
-        page_number = self.request.GET.get('page', 4)  # displayed
+        paginator = Paginator(qs, 2)  # displayed
+        page_number = self.request.GET.get('page', 1)  
         page_obj = paginator.get_page(page_number)
         return page_obj
 
